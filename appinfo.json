@@ -1,0 +1,72 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "walleball",
+    "enableMultiJS": false,
+    "longName": "TextKlockan",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/textklockan.png",
+                "name": "TEXTKLOCKAN",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "fonts/OpenSans-ExtraBold.ttf",
+                "name": "OPENSANS_EXTRABOLD_40",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "font"
+            },
+            {
+                "file": "fonts/OpenSans-Bold.ttf",
+                "name": "OPENSANS_BOLD_40",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "font"
+            },
+            {
+                "file": "fonts/OpenSans-Regular.ttf",
+                "name": "OPENSANS_REGULAR_32",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "font"
+            },
+            {
+                "file": "fonts/OpenSans-Light.ttf",
+                "name": "OPENSANS_LIGHT_40",
+                "targetPlatforms": [
+                    "aplite",
+                    "basalt",
+                    "chalk"
+                ],
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "TextKlock",
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "chalk"
+    ],
+    "uuid": "77626019-f50d-4a1d-88e4-54d81d39f17f",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
