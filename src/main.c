@@ -317,7 +317,7 @@ static int GetHourStrings(struct tm *ptmTime, char* pszEvent1, char* pszEvent2)
 }
 
 
-static void getTimeStrings(char* pszString1, char* pszString2, char* pszString3, char* pszString4)
+static void getTimeStrings(struct tm *ptmTime, char* pszString1, char* pszString2, char* pszString3, char* pszString4)
 {
 	strcpy(pszString1, "");
 	strcpy(pszString2, "");
@@ -325,8 +325,8 @@ static void getTimeStrings(char* pszString1, char* pszString2, char* pszString3,
 	strcpy(pszString4, "");
 
 	// Get a tm structure
-	time_t temp = time(NULL);
-	struct tm *ptmTime = localtime(&temp);
+//	time_t temp = time(NULL);
+//	struct tm *ptmTime = localtime(&temp);
 
 	if (!g_bConnected)
 	{
@@ -435,14 +435,20 @@ static void getTimeStrings(char* pszString1, char* pszString2, char* pszString3,
 }
 
 
-static void UpdateDisplay()
+static void UpdateDisplay(struct tm *ptmTime)
 {
 	static char szText1[32];
 	static char szText2[32];
 	static char szText3[32];
 	static char szText4[32];
 
-	getTimeStrings(szText1, szText2, szText3, szText4);
+  if (ptmTime == NULL)
+  {
+    time_t temp = time(NULL);
+    ptmTime = localtime(&temp);
+  }
+ 
+	getTimeStrings(ptmTime, szText1, szText2, szText3, szText4);
 
 	// hide all layers
 	text_layer_set_size(g_layerOneOfOne, GSize(0, 0));
@@ -540,14 +546,32 @@ static void UpdateDisplay()
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
-	UpdateDisplay();
+  if (tick_time->tm_sec == 0)
+  {
+    UpdateDisplay(tick_time);
+  }
+  else if (tick_time->tm_sec == 30)
+  {
+    // move the time up half a minute
+    tick_time->tm_min += 1;
+    if (tick_time->tm_min == 60)
+    {
+      tick_time->tm_min = 0;
+      tick_time->tm_hour += 1;
+      if (tick_time->tm_hour == 24)
+      {
+        tick_time->tm_hour = 0;  
+      }
+    }
+    UpdateDisplay(tick_time);
+  }
 }
 
 static void battery_callback(BatteryChargeState state)
 {
 	// Record the new battery level
 	g_nBatteryLevel = state.charge_percent;
-	UpdateDisplay();
+	UpdateDisplay(NULL);
 }
 
 static void bluetooth_callback(bool connected) {
@@ -562,7 +586,7 @@ static void bluetooth_callback(bool connected) {
 		vibes_double_pulse();
 	}
 	g_bConnected = connected;
-	UpdateDisplay();
+	UpdateDisplay(NULL);
 }
 
 
@@ -673,7 +697,7 @@ static void main_window_load(Window *window) {
 	*/
 
 	// show time on startup
-	UpdateDisplay();
+	UpdateDisplay(NULL);
 }
 
 static void main_window_unload(Window *window) {
@@ -704,7 +728,7 @@ static void init() {
 	//	UpdateDisplay();
 
 	// Register with TickTimerService
-	tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 	// Register for battery level updates
 	battery_state_service_subscribe(battery_callback);
 	// Register for Bluetooth connection updates
