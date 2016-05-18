@@ -26,28 +26,8 @@
                 "type": "font"
             },
             {
-                "file": "fonts/OpenSans-Bold.ttf",
-                "name": "OPENSANS_BOLD_40",
-                "targetPlatforms": [
-                    "aplite",
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "font"
-            },
-            {
                 "file": "fonts/OpenSans-Regular.ttf",
                 "name": "OPENSANS_REGULAR_32",
-                "targetPlatforms": [
-                    "aplite",
-                    "basalt",
-                    "chalk"
-                ],
-                "type": "font"
-            },
-            {
-                "file": "fonts/OpenSans-Light.ttf",
-                "name": "OPENSANS_LIGHT_40",
                 "targetPlatforms": [
                     "aplite",
                     "basalt",

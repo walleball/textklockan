@@ -17,6 +17,7 @@ static int g_nWidth;
 
 static int g_nBatteryLevel;
 static bool g_bConnected;
+static bool g_bConnectedCallback;
 
 static int GetEventStrings(struct tm *ptmTime, char* pszEvent1, char* pszEvent2)
 {
@@ -68,94 +69,6 @@ int GetMinutesUntil(int hour1, int minute1, int hour2, int minute2)
 	nMinutes = nMinutes + 60 * (hour2 - hour1);
 	return nMinutes;
 }
-
-/*
-struct entry
-{
-	int wday;
-	char subject[16];
-	int hour;
-	int minute;
-};
-
-struct entry schedule[] = {
-	{ 1, "MA", 8, 10 },
-	{ 1, "Mentor", 9, 20 },
-	{ 1, "IDH", 9, 55 },
-	{ 1, "Lunch", 11, 5 },
-	{ 1, "EN", 11, 55 },
-	{ 1, "SV", 12, 55 },
-	{ 1, "HKK", 14, 0 },
-	{ 1, "FRI", 15, 35 },
-
-	{ 2, "EN", 9, 50 },
-	{ 2, "SV", 10, 20 },
-	{ 2, "IDH", 11, 25 },
-	{ 2, "Lunch", 12, 35 },
-	{ 2, "NO", 13, 20 },
-	{ 2, "Elev Val", 14, 30 },
-	{ 2, "FRI", 15, 30 },
-
-	{ 3, "MA", 8, 10 },
-	{ 3, "SP2", 9, 10 },
-	{ 3, "SO", 10, 5 },
-	{ 3, "Lunch", 11, 15 },
-	{ 3, "SL", 12, 15 },
-	{ 3, "EN", 13, 30 },
-	{ 3, "SV", 14, 10 },
-	{ 3, "FRI", 14, 45 },
-
-	{ 4, "MA", 8, 10 },
-	{ 4, "NO", 9, 15 },
-	{ 4, "SO", 10, 10 },
-	{ 4, "Lunch", 11, 10 },
-	{ 4, "SV", 11, 55 },
-	{ 4, "KLR/KLM", 13, 10 },
-	{ 4, "FRI", 13, 50 },
-
-	{ 5, "SP2", 9, 5 },
-	{ 5, "SO", 10, 5 },
-	{ 5, "NO", 11, 25 },
-	{ 5, "Lunch", 12, 15 },
-	{ 5, "SV", 13, 0 },
-	{ 5, "FRI", 13, 45 },
-
-	{ 6, "krysset", 10, 3 }
-};
-
-static int GetScheduleStrings(struct tm *ptmTime, char* pszString1, char* pszString2)
-{
-	strcpy(pszString1, "");
-	strcpy(pszString2, "");
-
-	// 	if (g_model != WATCH_INFO_MODEL_PEBBLE_ORIGINAL)
-	// 	{
-	// 		return 0;
-	// 	}
-
-	int nMinute = ptmTime->tm_min;
-	int nHour = ptmTime->tm_hour;
-	int nWeekDay = ptmTime->tm_wday;
-
-	for (unsigned int i = 0; i < sizeof(schedule); i++)
-	{
-		struct entry e = schedule[i];
-		if (nWeekDay == e.wday)
-		{
-			int nMinutes = GetMinutesUntil(nHour, nMinute, e.hour, e.minute);
-			if (nMinutes >= 0 && nMinutes <= 22)
-			{
-				strcpy(pszString1, e.subject);
-				strftime(pszString2, 16, clock_is_24h_style() ? "%H:%M" : "%I:%M", ptmTime);
-				return -nMinutes;
-			}
-		}
-	}
-
-	return 0;
-}
-*/
-
 
 struct entry
 {
@@ -243,6 +156,7 @@ static int GetScheduleStrings(struct tm *ptmTime, char* pszString1, char* pszStr
 	strcpy(pszString1, "");
 	strcpy(pszString2, "");
 
+#if 0
 	int nMinutesUntil;
   
 	CHECK_SCHEDULE_EVENT(MONDAY, "skolgång", 7, 50)
@@ -266,7 +180,7 @@ static int GetScheduleStrings(struct tm *ptmTime, char* pszString1, char* pszStr
 	CHECK_SCHEDULE_EVENT(FRIDAY, "skolslut", 13, 45)
 
 	CHECK_SCHEDULE_EVENT(SATURDAY, "krysset", 10, 3)
-
+#endif
 	return 0;
 }
 
@@ -298,11 +212,6 @@ static int GetHourStrings(struct tm *ptmTime, char* pszEvent1, char* pszEvent2)
 		strcpy(pszEvent1, szHours[(nHour + 1) % 12]);
 		return nMinute - 60;
 	}
-	// 	else if (nMinute >= 33)
-	// 	{
-	// 		strcpy(pszEvent1, szHours[(nHour + 1) % 12]);
-	// 		return nMinute - 60;
-	// 	}
 	else if (nMinute >= 23)
 	{
 		strcpy(pszEvent1, "HALV");
@@ -324,10 +233,18 @@ static void getTimeStrings(struct tm *ptmTime, char* pszString1, char* pszString
 	strcpy(pszString3, "");
 	strcpy(pszString4, "");
 
-	// Get a tm structure
-//	time_t temp = time(NULL);
-//	struct tm *ptmTime = localtime(&temp);
-
+  if (g_bConnected && !g_bConnectedCallback)
+  {
+    g_bConnected = false;
+    // duoble pulse to warn of lost connection
+		vibes_double_pulse();
+		vibes_double_pulse();
+ 		strcpy(pszString1, "VAR ÄR");
+ 		strcpy(pszString2, "MOBILEN?");
+		strftime(pszString3, 16, clock_is_24h_style() ? "%H:%M" : "%I:%M", ptmTime);
+		return;
+	}
+  
 	if (!g_bConnected)
 	{
 		strftime(pszString1, 16, clock_is_24h_style() ? "%H:%M" : "%I:%M", ptmTime);
@@ -338,9 +255,6 @@ static void getTimeStrings(struct tm *ptmTime, char* pszString1, char* pszString
 	static char szEvent2[32];
 
 	int nMinute = GetHourStrings(ptmTime, szEvent1, szEvent2);
-
-// 	int nMinute = ptmTime->tm_min;
-// 	int nHour = ptmTime->tm_hour;
 
 	if (nMinute <= -18)
 	{
@@ -489,6 +403,14 @@ static void UpdateDisplay(struct tm *ptmTime)
 		{
 			colorText = GColorChromeYellow;
 		}
+		else if (g_nBatteryLevel <= 30)
+		{
+			colorText = GColorYellow;
+		}
+		else if (g_nBatteryLevel <= 40)
+		{
+			colorText = GColorGreen;
+		}
 	}
 
 	// set color of all layers
@@ -536,12 +458,6 @@ static void UpdateDisplay(struct tm *ptmTime)
 		text_layer_set_text(g_layerThreeOfFour, szText3);
 		text_layer_set_text(g_layerFourOfFour, szText4);
 	}
-
-
-	// Write the current hours and minutes into a buffer
-	//  strftime(min_text, sizeof(min_text), clock_is_24h_style() ?
-	//                                         "%H:%M" : "%I:%M", ptmTime);
-	// Display this time on the TextLayer
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
@@ -571,22 +487,19 @@ static void battery_callback(BatteryChargeState state)
 {
 	// Record the new battery level
 	g_nBatteryLevel = state.charge_percent;
-	UpdateDisplay(NULL);
+//	UpdateDisplay(NULL);
 }
 
-static void bluetooth_callback(bool connected) {
-
-	if (g_bConnected != connected)
-	{
+static void bluetooth_callback(bool connected) 
+{
+  g_bConnectedCallback = connected;
+  if (connected && !g_bConnected)
+  {
+    g_bConnected = true;
 		// Issue a vibrating alert
 		vibes_double_pulse();
-	}
-	if (!connected)
-	{
-		vibes_double_pulse();
-	}
-	g_bConnected = connected;
-	UpdateDisplay(NULL);
+  	UpdateDisplay(NULL);
+  }
 }
 
 
@@ -619,6 +532,7 @@ static void main_window_load(Window *window) {
 	g_nWidth = bounds.size.w;
 	g_nBatteryLevel = 100;
 	g_bConnected = true;
+  g_bConnectedCallback = true;
 
 	// Create GFont
 	// 	g_fontLite = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_OPENSANS_LIGHT_40));
